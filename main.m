@@ -1,4 +1,6 @@
+main()
 function main()
+
 
     % Create Orbit Parameters
     orbit_params = struct();
@@ -90,8 +92,10 @@ function main()
     title("Local Truncation Error")
     legend
 
+
+     % -------------- CONSERVATION OF PHYSICAL QUALITIES ----------------
+
+     [E_list, H_list] = conservation(t_list, V_list, orbit_params);
+
 end
 
-clear
-close all
-main()

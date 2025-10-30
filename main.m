@@ -1,4 +1,8 @@
+clear
+close all
+
 main()
+
 function main()
 
 
@@ -29,7 +33,7 @@ function main()
     BT_struct_EM.A = [0, 0; 0.5, 0];
 
     ti = 0;             % starting time
-    tf = 15;            % ending time
+    tf = 300;            % ending time
 
     tspan = [ti, tf];
 
@@ -79,7 +83,7 @@ function main()
     solution_func = @(t_in) compute_planetary_motion(t_in, V0, orbit_params);
 
     t_ref = 0.5;
-    [h_list, analytical_difference, e_local_FE, e_local_MP, e_local_BE, e_local_IMP] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref)
+    [h_list, analytical_difference, e_local_FE, e_local_MP, e_local_BE, e_local_IMP] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref);
 
 
     figure()
@@ -95,7 +99,8 @@ function main()
 
      % -------------- CONSERVATION OF PHYSICAL QUALITIES ----------------
 
-     [E_list, H_list] = conservation(t_list, V_list, orbit_params);
+     [EV, HV] = conservation(t_exact, V_list, orbit_params)
+     [EX, HX] = conservation(t_list, X_list, orbit_params)
 
 end
 

@@ -39,11 +39,10 @@ function main()
 
     % Define X0 as starting point location & velocity of planet
     X0 = [x0;y0;dxdt0;dydt0];
-    t_exact = linspace(tspan(1),tspan(2),100);
+    t_exact = linspace(tspan(1),tspan(2),300);
     V_list = compute_planetary_motion(t_exact,X0,orbit_params);
     
     
-
     
     h_ref= 0.1;
     [t_list,X_list,h_avg, num_evals] = explicit_RK_fixed_step_integration(gravity_rate_func_wrapper,tspan,X0,h_ref,BT_struct_EM)
@@ -82,25 +81,126 @@ function main()
     V0 = [x0;y0;dxdt0;dydt0];
     solution_func = @(t_in) compute_planetary_motion(t_in, V0, orbit_params);
 
-    t_ref = 0.5;
-    [h_list, analytical_difference, e_local_FE, e_local_MP, e_local_BE, e_local_IMP] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref);
+    HeunEuler = struct();
+    HeunEuler.C = [0,1];
+    HeunEuler.B = [1/2,1/2;1,0];
+    HeunEuler.A = [0,0;1,0];
 
+
+    t_ref = 0.5;
+    [h_list, analytical_difference, e_local_FE, e_local_MP, e_local_Heun] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref, BT_struct_FE, BT_struct_EM, HeunEuler);
 
     figure()
     loglog(h_list,analytical_difference, 'DisplayName', 'Analytical Difference');
     hold on
     loglog(h_list, e_local_FE, 'DisplayName', 'Forward Euler Error')
     loglog(h_list, e_local_MP, 'DisplayName', 'Explicit Midpoint Error')
-    % loglog(h_list, k_FE*h_list.^p_FE_01, 'DisplayName', 'FE linear')
-    % loglog(h_list, k_MP_01*h_list.^p_MP_01, 'DisplayName', 'MP linear')
+    loglog(h_list, e_local_Heun, 'DisplayName', 'Heun Euler')
     title("Local Truncation Error")
     legend
 
 
      % -------------- CONSERVATION OF PHYSICAL QUALITIES ----------------
 
-     [EV, HV] = conservation(t_exact, V_list, orbit_params)
-     [EX, HX] = conservation(t_list, X_list, orbit_params)
+     [EV, HV] = conservation(t_exact, V_list, orbit_params);
+     [EX, HX] = conservation(t_list, X_list, orbit_params);
+
+
+     % -------------- STEP SIZE EFFECT -----------------------
+
+     h_list = logspace(-4, -1, 100);
+
+
+    ti = 0;             % starting time
+    tf = 300;           % ending time
+    
+    tspan = [ti, tf];
+    
+    % Define X0 as starting point location & velocity of planet
+    X0 = [x0;y0;dxdt0;dydt0];
+
+    
+    DormandPrince = struct();
+    DormandPrince.C = [0, 1/5, 3/10, 4/5, 8/9, 1, 1];
+    DormandPrince.B = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0;...
+        5179/57600, 0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40];
+    DormandPrince.A = [0,0,0,0,0,0,0;
+        1/5, 0, 0, 0,0,0,0;...
+        3/40, 9/40, 0, 0, 0, 0,0;...
+        44/45, -56/15, 32/9, 0, 0, 0,0;...
+        19372/6561, -25360/2187, 64448/6561, -212/729, 0, 0,0;...
+        9017/3168, -355/33, 46732/5247, 49/176, -5103/18656, 0,0;...
+        35/384, 0, 500/1113, 125/192, -2187/6784, 11/84,0];
+    Fehlberg = struct();
+    Fehlberg.C = [0, 1/4, 3/8, 12/13, 1, 1/2];
+    Fehlberg.B = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55;...
+        25/216, 0, 1408/2565, 2197/4104, -1/5, 0];
+    Fehlberg.A = [0,0,0,0,0,0;...
+        1/4, 0,0,0,0,0;...
+        3/32, 9/32, 0,0,0,0;...
+        1932/2197, -7200/2197, 7296/2197, 0,0,0;...
+        439/216, -8, 3680/513, -845/4104, 0,0;...
+        -8/27, 2, -3544/2565, 1859/4104, -11/40, 0];
+    HeunEuler = struct();
+    HeunEuler.C = [0,1];
+    HeunEuler.B = [1/2,1/2;1,0];
+    HeunEuler.A = [0,0;1,0];
+    FehlbergRK1 = struct();
+    FehlbergRK1.C = [0,1/2,1];
+    FehlbergRK1.B = [1/512, 255/256, 1/512;...
+        1/256, 255/256, 0];
+    FehlbergRK1.A = [0,0,0;1/2,0,0;1/256,255/256,0];
+    Bogacki = struct();
+    Bogacki.C = [0,1/2, 3/4, 1];
+    Bogacki.B = [2/9, 1/3, 4/9, 0; 7/24, 1/4, 1/3, 1/8];
+    Bogacki.A = [0,0,0,0; 1/2,0,0,0; 0,3/4,0,0; 2/9,1/3, 4/9, 0];
+    
+    % [XB1, XB2, ~] = RK_step_embedded(gravity_rate_func_wrapper,ti,X0,0.1,FehlbergRK1)
+
+
+    XB1_list = zeros(4, length(h_list));
+    XB2_list = zeros(4, length(h_list));
+
+    for i= 1:length(h_list)
+        [XB1, XB2, ~] = RK_step_embedded(gravity_rate_func_wrapper,ti,X0,h_list(i),DormandPrince);
+        XB1_list(:, i) = XB1;
+        XB2_list(:, i) = XB2;
+    end
+
+    figure()
+    subplot(2, 2, 1)
+    loglog(h_list, XB1_list(1, :), 'r--', 'DisplayName', 'XB1 x-pos')
+    hold on
+    loglog(h_list, XB2_list(1, :), 'b--', 'DisplayName', 'XB2 x-pos')
+    legend()
+    title("x-position plot")
+
+    subplot(2, 2, 2)
+    semilogx(h_list, XB1_list(2, :), 'DisplayName', 'XB1 y-pos')
+    hold on
+    semilogx(h_list, XB2_list(2, :), 'DisplayName', 'XB2 y-pos')
+    legend()
+    title("y-position plot")
+
+    subplot(2, 2, 3)
+    semilogx(h_list, XB1_list(3, :), 'r--', 'DisplayName', 'XB1 x-velocity')
+    hold on
+    semilogx(h_list, XB2_list(3, :), 'b--', 'DisplayName', 'XB2 x-velocity')
+    legend()
+    title("x-velocity plot")
+
+    subplot(2, 2, 4)
+    semilogx(h_list, XB1_list(4, :), 'DisplayName', 'XB1 y-velocity')
+    hold on
+    semilogx(h_list, XB2_list(4, :), 'DisplayName', 'XB2 y-velocity')
+    legend()
+    title("y-velocity plot")
+
+    XB_diff = vecnorm(XB1_list-XB2_list);
+
+    figure()
+    loglog(h_list, XB_diff)
+
 
 end
 

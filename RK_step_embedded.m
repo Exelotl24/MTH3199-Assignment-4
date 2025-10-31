@@ -1,5 +1,5 @@
 %This function computes the value of X at the next time step
-%for any arbitrary RK method
+%for any arbitrary embedded RK method
 %INPUTS:
 %rate_func_in: the function used to compute dXdt. rate_func_in will
 % have the form: dXdt = rate_func_in(t,X) (t is before X)
@@ -11,11 +11,11 @@
 % BT_struct.B: vector of b_i values
 % BT_struct.C: vector of c_i values
 %OUTPUTS:
-%XB: the approximate value for X(t+h) (the next step)
-% formula depends on the integration method used
+%XB1: the approximate value for X(t+h) using the first row of the Tableau
+%XB2: the approximate value for X(t+h) using the second row of the Tableau
 %num_evals: A count of the number of times that you called
 % rate_func_in when computing the next step
-function [XB, num_evals] = explicit_RK_step(rate_func_in,t,XA,h,BT_struct)
+function [XB1, XB2, num_evals] = RK_step_embedded(rate_func_in,t,XA,h,BT_struct)
     s = length(BT_struct.B(1, :));
     % initialize K
     K = zeros(length(XA),s);
@@ -31,5 +31,7 @@ function [XB, num_evals] = explicit_RK_step(rate_func_in,t,XA,h,BT_struct)
     end
 
     % Caclulate final X value
-    XB = XA + h*(K*(BT_struct.B(1,:)'));
+    XB1 = XA + h*(K*(BT_struct.B(1,:)'));
+    XB2 = XA + h*(K*(BT_struct.B(2,:)'));
+
 end

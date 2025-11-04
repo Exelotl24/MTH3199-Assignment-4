@@ -1,7 +1,7 @@
-clear
-close all
-
-main()
+% clear
+% close all
+% 
+% main()
 
 function main()
 
@@ -106,7 +106,7 @@ function main()
      [EX, HX] = conservation(t_list, X_list, orbit_params);
 
 
-     % -------------- STEP SIZE EFFECT -----------------------
+     % -------------- LOCAL TRUNCATION -----------------------
 
      h_list = logspace(-4, -1, 100);
 
@@ -157,49 +157,97 @@ function main()
     
     % [XB1, XB2, ~] = RK_step_embedded(gravity_rate_func_wrapper,ti,X0,0.1,FehlbergRK1)
 
+    h_list = logspace(-2,1,50);
 
-    XB1_list = zeros(4, length(h_list));
-    XB2_list = zeros(4, length(h_list));
+%     XB1_list = zeros(4, length(h_list));
+%     XB2_list = zeros(4, length(h_list));
 
     for i= 1:length(h_list)
+%         [XB1, XB2, ~] = RK_step_embedded(gravity_rate_func_wrapper,ti,X0,h_list(i),DormandPrince);
+%         XB1_list(:, i) = XB1;
+%         XB2_list(:, i) = XB2;
+
+        X0 = solution_func(t_ref);
+        X = solution_func(t_ref+h_list(i));
         [XB1, XB2, ~] = RK_step_embedded(gravity_rate_func_wrapper,ti,X0,h_list(i),DormandPrince);
-        XB1_list(:, i) = XB1;
-        XB2_list(:, i) = XB2;
+
+        analytical_difference(i) = norm(X-X0);
+        e_local_XB1(i) = norm(XB1-X);
+        e_local_XB2(i) = norm(XB2-X);
+        XB_diff(i) = norm(XB2-XB1);
     end
 
     figure()
-    subplot(2, 2, 1)
-    loglog(h_list, XB1_list(1, :), 'r--', 'DisplayName', 'XB1 x-pos')
+    loglog(h_list,e_local_XB1,'ro','MarkerFaceColor','r','markersize',3);
     hold on
-    loglog(h_list, XB2_list(1, :), 'b--', 'DisplayName', 'XB2 x-pos')
-    legend()
-    title("x-position plot")
+    loglog(h_list,e_local_XB2,'bo','MarkerFaceColor','b','markersize',3);
+    loglog(h_list,XB_diff,'go','MarkerFaceColor','g','markersize',3);
+%     figure()
+%     subplot(2, 2, 1)
+%     loglog(h_list, XB1_list(1, :), 'r--', 'DisplayName', 'XB1 x-pos')
+%     hold on
+%     loglog(h_list, XB2_list(1, :), 'b--', 'DisplayName', 'XB2 x-pos')
+%     legend()
+%     title("x-position plot")
+% 
+%     subplot(2, 2, 2)
+%     semilogx(h_list, XB1_list(2, :), 'DisplayName', 'XB1 y-pos')
+%     hold on
+%     semilogx(h_list, XB2_list(2, :), 'DisplayName', 'XB2 y-pos')
+%     legend()
+%     title("y-position plot")
+% 
+%     subplot(2, 2, 3)
+%     semilogx(h_list, XB1_list(3, :), 'r--', 'DisplayName', 'XB1 x-velocity')
+%     hold on
+%     semilogx(h_list, XB2_list(3, :), 'b--', 'DisplayName', 'XB2 x-velocity')
+%     legend()
+%     title("x-velocity plot")
+% 
+%     subplot(2, 2, 4)
+%     semilogx(h_list, XB1_list(4, :), 'DisplayName', 'XB1 y-velocity')
+%     hold on
+%     semilogx(h_list, XB2_list(4, :), 'DisplayName', 'XB2 y-velocity')
+%     legend()
+%     title("y-velocity plot")
+% 
+%     XB_diff = vecnorm(XB1_list-XB2_list);
+% 
+%     figure()
+%     loglog(h_list, XB_diff)
+% 
 
-    subplot(2, 2, 2)
-    semilogx(h_list, XB1_list(2, :), 'DisplayName', 'XB1 y-pos')
-    hold on
-    semilogx(h_list, XB2_list(2, :), 'DisplayName', 'XB2 y-pos')
-    legend()
-    title("y-position plot")
+% ----------------------- ADAPTIVE RK STEP ------------------------------
 
-    subplot(2, 2, 3)
-    semilogx(h_list, XB1_list(3, :), 'r--', 'DisplayName', 'XB1 x-velocity')
-    hold on
-    semilogx(h_list, XB2_list(3, :), 'b--', 'DisplayName', 'XB2 x-velocity')
-    legend()
-    title("x-velocity plot")
+p = 5;  % Dormand–Prince high-order method
+error_desired = 1e-5;
+h_start = 0.1;
 
-    subplot(2, 2, 4)
-    semilogx(h_list, XB1_list(4, :), 'DisplayName', 'XB1 y-velocity')
-    hold on
-    semilogx(h_list, XB2_list(4, :), 'DisplayName', 'XB2 y-velocity')
-    legend()
-    title("y-velocity plot")
+[XB, num_evals_step, h_next, redo] = explicit_RK_variable_step(...
+    gravity_rate_func_wrapper, 0, X0, h_start, DormandPrince, p, error_desired);
 
-    XB_diff = vecnorm(XB1_list-XB2_list);
+% disp('Single step test:');
+% disp(['redo = ', num2str(redo)]);
+% disp(['New step size h_next = ', num2str(h_next)]);
+% disp(['Number of function evaluations = ', num2str(num_evals_step)]);
+% disp('New state estimate XB = ');
+disp(XB);
 
-    figure()
-    loglog(h_list, XB_diff)
+
+[t_var, X_var, h_avg_var, num_evals_var] = explicit_RK_variable_step_integration(...
+    gravity_rate_func_wrapper, [0, 300], X0, h_ref, DormandPrince, p, error_desired);
+
+
+% compare orbit to real solution
+figure();
+plot(0,0,'yo','markerfacecolor','y','markersize',8); % sun
+hold on;
+plot(X_var(:,1), X_var(:,2), 'r', 'DisplayName', 'Adaptive RK');
+plot(V_list(:,1), V_list(:,2), 'k--', 'DisplayName', 'Exact orbit');
+axis equal; axis([-20, 20, -20, 20]);
+title('Adaptive RK Orbit vs Exact Solution');
+xlabel('x position'); ylabel('y position');
+legend show;
 
 
 end

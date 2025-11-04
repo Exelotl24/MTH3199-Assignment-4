@@ -219,7 +219,7 @@ function main()
 
 % ----------------------- ADAPTIVE RK STEP ------------------------------
 
-p = 5;  % Dormand–Prince high-order method
+p = 5;  % Dormand–Prince method
 error_desired = 1e-5;
 h_start = 0.1;
 

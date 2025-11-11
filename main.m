@@ -1,7 +1,7 @@
-% clear
-% close all
-% 
-% main()
+clear
+close all
+
+main()
 
 function main()
 
@@ -178,10 +178,14 @@ function main()
     end
 
     figure()
-    loglog(h_list,e_local_XB1,'ro','MarkerFaceColor','r','markersize',3);
+    loglog(h_list,e_local_XB1,'ro','MarkerFaceColor','r','markersize',3, 'DisplayName', 'XB1');
     hold on
-    loglog(h_list,e_local_XB2,'bo','MarkerFaceColor','b','markersize',3);
-    loglog(h_list,XB_diff,'go','MarkerFaceColor','g','markersize',3);
+    loglog(h_list,e_local_XB2,'bo','MarkerFaceColor','b','markersize',3, 'DisplayName', 'XB2');
+    loglog(h_list,XB_diff,'go','MarkerFaceColor','g','markersize',3, 'DisplayName', 'XBdiff');
+%     xlabel(''); ylabel('');
+    legend()
+
+
 %     figure()
 %     subplot(2, 2, 1)
 %     loglog(h_list, XB1_list(1, :), 'r--', 'DisplayName', 'XB1 x-pos')

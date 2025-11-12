@@ -237,7 +237,7 @@ function usage_example()
     t_range = linspace(0,30,100);
     V_list = compute_planetary_motion(t_range,V0,orbit_params);
     
-    
+    figure()
     axis equal; axis square;
     axis([-20,20,-20,20])
     hold on

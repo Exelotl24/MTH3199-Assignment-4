@@ -22,6 +22,7 @@
 %h_next: the time-step size at the next iteration
 %redo: False if the estimated error was less than error_desired
 % True if the estimated error was larger than error_desired
+
 function [XB, num_evals, h_next, redo] = explicit_RK_variable_step...
 (rate_func_in,t,XA,h,BT_struct,p,error_desired)
 

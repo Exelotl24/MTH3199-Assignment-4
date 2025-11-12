@@ -11,7 +11,7 @@ function [E_effectivity, H_effectivity] = conservation(t_list, V_list, orbit_par
     plot(t_list, E_error_list, 'k--', 'DisplayName', 'Energy Error')
     hold on
     plot(t_list, H_error_list, 'k', 'DisplayName', 'Angular Momentum Error')
-    legend
+    legend()
 
     E_effectivity = norm(E_error_list);
     H_effectivity = norm(H_error_list);

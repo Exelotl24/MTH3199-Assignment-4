@@ -88,22 +88,50 @@ function main()
 
 
     t_ref = 0.5;
-    [h_list, analytical_difference, e_local_FE, e_local_MP, e_local_Heun] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref, BT_struct_FE, BT_struct_EM, HeunEuler);
+    [h_list, analytical_difference, e_local_FE] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref, BT_struct_FE);
+    [~, ~, e_local_MP] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref, BT_struct_EM);
+    [~, ~, e_local_Heun] = local_truncation_error(gravity_rate_func_wrapper, solution_func, t_ref, HeunEuler);
 
-    figure()
+
+    figure(3)
     loglog(h_list,analytical_difference, 'DisplayName', 'Analytical Difference');
     hold on
     loglog(h_list, e_local_FE, 'DisplayName', 'Forward Euler Error')
     loglog(h_list, e_local_MP, 'DisplayName', 'Explicit Midpoint Error')
     loglog(h_list, e_local_Heun, 'DisplayName', 'Heun Euler')
-    title("Local Truncation Error")
+    title("Local Truncation Error vs. Step Size")
+    xlabel('step size')
+    ylabel('local truncation error')
     legend
 
 
+    % -------------- GLOBAL TRUNCATION ERROR -----------------
+    global_tspan = [0, 300];
+
+    disp('calculating global FE')
+    [h_list, e_global_FE] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_FE);
+    disp('calculating global MP')
+    [~, e_global_MP] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_EM);
+    disp('calculating global Heun')
+    [~, e_global_Heun] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, HeunEuler);
+
+
+    figure(4)
+    loglog(h_list, e_global_FE, 'DisplayName', 'Forward Euler Error')
+    hold on
+    loglog(h_list, e_global_MP, 'DisplayName', 'Explicit Midpoint Error')
+    loglog(h_list, e_global_Heun, 'DisplayName', 'Heun Euler')
+    title("Global Truncation Error vs. Step Size")
+    xlabel('step size')
+    ylabel('global truncation error')
+    legend()
+
+return;
+
      % -------------- CONSERVATION OF PHYSICAL QUALITIES ----------------
 
-     [EV, HV] = conservation(t_exact, V_list, orbit_params);
-     [EX, HX] = conservation(t_list, X_list, orbit_params);
+     [EV, HV] = conservation(t_exact, V_list, orbit_params);        % figure(5)
+     [EX, HX] = conservation(t_list, X_list, orbit_params);         % figure(6)
 
 
      % -------------- LOCAL TRUNCATION -----------------------
@@ -177,16 +205,17 @@ function main()
         XB_diff(i) = norm(XB2-XB1);
     end
 
-    figure()
+    figure(7)
     loglog(h_list,e_local_XB1,'ro','MarkerFaceColor','r','markersize',3, 'DisplayName', 'XB1');
     hold on
     loglog(h_list,e_local_XB2,'bo','MarkerFaceColor','b','markersize',3, 'DisplayName', 'XB2');
     loglog(h_list,XB_diff,'go','MarkerFaceColor','g','markersize',3, 'DisplayName', 'XBdiff');
-%     xlabel(''); ylabel('');
+    xlabel('step-size')
+    ylabel('local truncation error')
     legend()
 
 
-%     figure()
+%     figure(8)
 %     subplot(2, 2, 1)
 %     loglog(h_list, XB1_list(1, :), 'r--', 'DisplayName', 'XB1 x-pos')
 %     hold on
@@ -217,7 +246,7 @@ function main()
 % 
 %     XB_diff = vecnorm(XB1_list-XB2_list);
 % 
-%     figure()
+%     figure(9)
 %     loglog(h_list, XB_diff)
 % 
 
@@ -238,12 +267,12 @@ h_start = 0.1;
 disp(XB);
 
 
-[t_var, X_var, h_avg_var, num_evals_var] = explicit_RK_variable_step_integration(...
+[t_var, X_var, h_avg_var, num_evals_var, step_failure_rate] = explicit_RK_variable_step_integration(...
     gravity_rate_func_wrapper, [0, 300], X0, h_ref, DormandPrince, p, error_desired);
 
 
 % compare orbit to real solution
-figure();
+figure(10);
 plot(0,0,'yo','markerfacecolor','y','markersize',8); % sun
 hold on;
 plot(X_var(:,1), X_var(:,2), 'r', 'DisplayName', 'Adaptive RK');
@@ -252,6 +281,46 @@ axis equal; axis([-20, 20, -20, 20]);
 title('Adaptive RK Orbit vs Exact Solution');
 xlabel('x position'); ylabel('y position');
 legend show;
+
+% New define planet start
+    x0 = 3;
+    y0 = 5;
+    dxdt0 = 3.5;
+    dydt0 = 0;
+
+    ti = 0;             % starting time
+    tf = 300;            % ending time
+
+    tspan = [ti, tf];
+
+    % Define X0 as starting point location & velocity of planet
+    X0 = [x0;y0;dxdt0;dydt0];
+    t_exact = linspace(tspan(1),tspan(2),300);
+    V_list = compute_planetary_motion(t_exact,X0,orbit_params);
+    
+    h_ref= 0.01;
+
+    [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration ...
+    (gravity_rate_func_wrapper, tspan, X0, h_ref, HeunEuler, p, error_desired);
+
+    error_desired_list = logspace(-9, -2, 100);
+
+%     for i = 1:length(error_desired_list)
+% 
+%     [t_list, X_list, h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration ...
+%     (gravity_rate_func_wrapper, tspan, X0, h_ref, HeunEuler, p, error_desired_list(i));
+% 
+%     
+% 
+%     end
+
+    figure(11)
+    axis([-20,40,-50,20])
+    hold on
+    plot(0,0,'ro','markerfacecolor','r','markersize',5, 'DisplayName', 'Star');
+    plot(X_list(:,1),X_list(:,2),'r','DisplayName', 'Calculated'); 
+    plot(V_list(:,1),V_list(:,2),'k--', 'DisplayName', 'Exact'); 
+    legend()
 
 
 end

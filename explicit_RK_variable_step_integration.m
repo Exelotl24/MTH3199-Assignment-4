@@ -16,7 +16,7 @@
 %X_list: the vector of X, [X0';X1';X2';...;(X_end)'] at each time step
 %h_avg: the average step size
 %num_evals: total number of calls made to rate_func_in during the integration
-function [t_list,X_list,h_avg, num_evals] = explicit_RK_variable_step_integration ...
+function [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration ...
 (rate_func_in,tspan,X0,h_ref,BT_struct,p,error_desired)
 
     % initial conditions
@@ -31,6 +31,8 @@ function [t_list,X_list,h_avg, num_evals] = explicit_RK_variable_step_integratio
     X_list = X.';
 
     num_evals = 0;
+    attempted_steps = 0;
+    failed_steps = 0;
     
     while t < t_end
 
@@ -41,11 +43,13 @@ function [t_list,X_list,h_avg, num_evals] = explicit_RK_variable_step_integratio
 
         % compute adaptive step
         [X_next, num_eval_step, h_next, redo] = explicit_RK_variable_step(rate_func_in, t, X, h, BT_struct, p, error_desired);
+        attemped_steps = attempted_steps + 1;
         num_evals = num_evals + num_eval_step;
 
         if redo
             % reject step, retry with smaller h
             h = h_next;
+            failed_steps = failed_steps + 1;
         else
             % accept step
             t = t + h;
@@ -63,5 +67,8 @@ function [t_list,X_list,h_avg, num_evals] = explicit_RK_variable_step_integratio
     % compute average step size
     h_list = diff(t_list);
     h_avg = mean(h_list);
+
+    % step failure rate
+    step_failure_rate = (failed_steps)/attemped_steps;
 
 end

@@ -108,25 +108,25 @@ function main()
     % -------------- GLOBAL TRUNCATION ERROR -----------------
     global_tspan = [0, 300];
 
-    disp('calculating global FE')
-    [h_list, e_global_FE] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_FE);
-    disp('calculating global MP')
-    [~, e_global_MP] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_EM);
-    disp('calculating global Heun')
-    [~, e_global_Heun] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, HeunEuler);
+%     disp('calculating global FE')
+%     [h_list, e_global_FE] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_FE);
+%     disp('calculating global MP')
+%     [~, e_global_MP] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_EM);
+%     disp('calculating global Heun')
+%     [~, e_global_Heun] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, HeunEuler);
+% 
+% 
+%     figure(4)
+%     loglog(h_list, e_global_FE, 'DisplayName', 'Forward Euler Error')
+%     hold on
+%     loglog(h_list, e_global_MP, 'DisplayName', 'Explicit Midpoint Error')
+%     loglog(h_list, e_global_Heun, 'DisplayName', 'Heun Euler')
+%     title("Global Truncation Error vs. Step Size")
+%     xlabel('step size')
+%     ylabel('global truncation error')
+%     legend()
 
-
-    figure(4)
-    loglog(h_list, e_global_FE, 'DisplayName', 'Forward Euler Error')
-    hold on
-    loglog(h_list, e_global_MP, 'DisplayName', 'Explicit Midpoint Error')
-    loglog(h_list, e_global_Heun, 'DisplayName', 'Heun Euler')
-    title("Global Truncation Error vs. Step Size")
-    xlabel('step size')
-    ylabel('global truncation error')
-    legend()
-
-return;
+% return;
 
      % -------------- CONSERVATION OF PHYSICAL QUALITIES ----------------
 

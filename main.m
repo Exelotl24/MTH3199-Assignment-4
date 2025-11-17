@@ -1,7 +1,7 @@
 clear
 close all
 
-main()
+main
 
 function main()
 
@@ -32,6 +32,42 @@ function main()
     BT_struct_EM.B = [0, 1];
     BT_struct_EM.A = [0, 0; 0.5, 0];
 
+
+    DormandPrince = struct();
+    DormandPrince.C = [0, 1/5, 3/10, 4/5, 8/9, 1, 1];
+    DormandPrince.B = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0;...
+        5179/57600, 0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40];
+    DormandPrince.A = [0,0,0,0,0,0,0;
+        1/5, 0, 0, 0,0,0,0;...
+        3/40, 9/40, 0, 0, 0, 0,0;...
+        44/45, -56/15, 32/9, 0, 0, 0,0;...
+        19372/6561, -25360/2187, 64448/6561, -212/729, 0, 0,0;...
+        9017/3168, -355/33, 46732/5247, 49/176, -5103/18656, 0,0;...
+        35/384, 0, 500/1113, 125/192, -2187/6784, 11/84,0];
+    Fehlberg = struct();
+    Fehlberg.C = [0, 1/4, 3/8, 12/13, 1, 1/2];
+    Fehlberg.B = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55;...
+        25/216, 0, 1408/2565, 2197/4104, -1/5, 0];
+    Fehlberg.A = [0,0,0,0,0,0;...
+        1/4, 0,0,0,0,0;...
+        3/32, 9/32, 0,0,0,0;...
+        1932/2197, -7200/2197, 7296/2197, 0,0,0;...
+        439/216, -8, 3680/513, -845/4104, 0,0;...
+        -8/27, 2, -3544/2565, 1859/4104, -11/40, 0];
+    HeunEuler = struct();
+    HeunEuler.C = [0,1];
+    HeunEuler.B = [1/2,1/2;1,0];
+    HeunEuler.A = [0,0;1,0];
+    FehlbergRK1 = struct();
+    FehlbergRK1.C = [0,1/2,1];
+    FehlbergRK1.B = [1/512, 255/256, 1/512;...
+        1/256, 255/256, 0];
+    FehlbergRK1.A = [0,0,0;1/2,0,0;1/256,255/256,0];
+    Bogacki = struct();
+    Bogacki.C = [0,1/2, 3/4, 1];
+    Bogacki.B = [2/9, 1/3, 4/9, 0; 7/24, 1/4, 1/3, 1/8];
+    Bogacki.A = [0,0,0,0; 1/2,0,0,0; 0,3/4,0,0; 2/9,1/3, 4/9, 0];
+
     ti = 0;             % starting time
     tf = 300;            % ending time
 
@@ -45,7 +81,7 @@ function main()
     
     
     h_ref= 0.1;
-    [t_list,X_list,h_avg, num_evals] = explicit_RK_fixed_step_integration(gravity_rate_func_wrapper,tspan,X0,h_ref,BT_struct_EM)
+    [t_list,X_list,h_avg, num_evals] = explicit_RK_fixed_step_integration(gravity_rate_func_wrapper,tspan,X0,h_ref,BT_struct_EM);
 
     figure(1);
     subplot(2,1,1)
@@ -105,28 +141,33 @@ function main()
     legend
 
 
-    % -------------- GLOBAL TRUNCATION ERROR -----------------
-    global_tspan = [0, 300];
+    % % -------------- GLOBAL TRUNCATION ERROR -----------------
+    % global_tspan = [0, 300];
+    % 
+    % disp('calculating global FE')
+    % [h_list, e_global_FE] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_FE);
+    % disp('calculating global MP')
+    % [~, e_global_MP] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_EM);
+    % disp('calculating global Heun')
+    % [~, e_global_Heun] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, HeunEuler);
+    % disp('calculating global DormandPrince')
+    % [~, e_global_DP] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, DormandPrince);
+    % disp('calculating global Fehlberg')
+    % [~, e_global_Fehlberg] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, Fehlberg);
+    % 
+    % 
+    % figure(4)
+    % loglog(h_list, e_global_FE, 'DisplayName', 'Forward Euler Error')
+    % hold on
+    % loglog(h_list, e_global_MP, 'DisplayName', 'Explicit Midpoint Error')
+    % loglog(h_list, e_global_Heun, 'DisplayName', 'Heun Euler')
+    % loglog(h_list, e_global_DP, 'DisplayName', 'Dormand Prince')
+    % loglog(h_list, e_global_Fehlberg, 'DisplayName', 'Fehlberg')
+    % title("Global Truncation Error vs. Step Size")
+    % xlabel('step size')
+    % ylabel('global truncation error')
+    % legend()
 
-%     disp('calculating global FE')
-%     [h_list, e_global_FE] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_FE);
-%     disp('calculating global MP')
-%     [~, e_global_MP] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, BT_struct_EM);
-%     disp('calculating global Heun')
-%     [~, e_global_Heun] = global_truncation_error(gravity_rate_func_wrapper, solution_func, global_tspan, HeunEuler);
-% 
-% 
-%     figure(4)
-%     loglog(h_list, e_global_FE, 'DisplayName', 'Forward Euler Error')
-%     hold on
-%     loglog(h_list, e_global_MP, 'DisplayName', 'Explicit Midpoint Error')
-%     loglog(h_list, e_global_Heun, 'DisplayName', 'Heun Euler')
-%     title("Global Truncation Error vs. Step Size")
-%     xlabel('step size')
-%     ylabel('global truncation error')
-%     legend()
-
-% return;
 
      % -------------- CONSERVATION OF PHYSICAL QUALITIES ----------------
 
@@ -147,41 +188,7 @@ function main()
     % Define X0 as starting point location & velocity of planet
     X0 = [x0;y0;dxdt0;dydt0];
 
-    
-    DormandPrince = struct();
-    DormandPrince.C = [0, 1/5, 3/10, 4/5, 8/9, 1, 1];
-    DormandPrince.B = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0;...
-        5179/57600, 0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40];
-    DormandPrince.A = [0,0,0,0,0,0,0;
-        1/5, 0, 0, 0,0,0,0;...
-        3/40, 9/40, 0, 0, 0, 0,0;...
-        44/45, -56/15, 32/9, 0, 0, 0,0;...
-        19372/6561, -25360/2187, 64448/6561, -212/729, 0, 0,0;...
-        9017/3168, -355/33, 46732/5247, 49/176, -5103/18656, 0,0;...
-        35/384, 0, 500/1113, 125/192, -2187/6784, 11/84,0];
-    Fehlberg = struct();
-    Fehlberg.C = [0, 1/4, 3/8, 12/13, 1, 1/2];
-    Fehlberg.B = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55;...
-        25/216, 0, 1408/2565, 2197/4104, -1/5, 0];
-    Fehlberg.A = [0,0,0,0,0,0;...
-        1/4, 0,0,0,0,0;...
-        3/32, 9/32, 0,0,0,0;...
-        1932/2197, -7200/2197, 7296/2197, 0,0,0;...
-        439/216, -8, 3680/513, -845/4104, 0,0;...
-        -8/27, 2, -3544/2565, 1859/4104, -11/40, 0];
-    HeunEuler = struct();
-    HeunEuler.C = [0,1];
-    HeunEuler.B = [1/2,1/2;1,0];
-    HeunEuler.A = [0,0;1,0];
-    FehlbergRK1 = struct();
-    FehlbergRK1.C = [0,1/2,1];
-    FehlbergRK1.B = [1/512, 255/256, 1/512;...
-        1/256, 255/256, 0];
-    FehlbergRK1.A = [0,0,0;1/2,0,0;1/256,255/256,0];
-    Bogacki = struct();
-    Bogacki.C = [0,1/2, 3/4, 1];
-    Bogacki.B = [2/9, 1/3, 4/9, 0; 7/24, 1/4, 1/3, 1/8];
-    Bogacki.A = [0,0,0,0; 1/2,0,0,0; 0,3/4,0,0; 2/9,1/3, 4/9, 0];
+
     
     % [XB1, XB2, ~] = RK_step_embedded(gravity_rate_func_wrapper,ti,X0,0.1,FehlbergRK1)
 
@@ -256,33 +263,25 @@ p = 5;  % Dormand–Prince method
 error_desired = 1e-5;
 h_start = 0.1;
 
-[XB, num_evals_step, h_next, redo] = explicit_RK_variable_step(...
-    gravity_rate_func_wrapper, 0, X0, h_start, DormandPrince, p, error_desired);
-
-% disp('Single step test:');
-% disp(['redo = ', num2str(redo)]);
-% disp(['New step size h_next = ', num2str(h_next)]);
-% disp(['Number of function evaluations = ', num2str(num_evals_step)]);
-% disp('New state estimate XB = ');
-disp(XB);
+[XB, num_evals_step, h_next, redo] = explicit_RK_variable_step(gravity_rate_func_wrapper, 0, X0, h_start, DormandPrince, p, error_desired);
 
 
-[t_var, X_var, h_avg_var, num_evals_var, step_failure_rate] = explicit_RK_variable_step_integration(...
-    gravity_rate_func_wrapper, [0, 300], X0, h_ref, DormandPrince, p, error_desired);
+[t_var, X_var, h_avg_var, num_evals_var, step_failure_rate] = explicit_RK_variable_step_integration(gravity_rate_func_wrapper, [0, 300], X0, h_ref, DormandPrince, p, error_desired);
 
 
 % compare orbit to real solution
-figure(10);
-plot(0,0,'yo','markerfacecolor','y','markersize',8); % sun
-hold on;
-plot(X_var(:,1), X_var(:,2), 'r', 'DisplayName', 'Adaptive RK');
-plot(V_list(:,1), V_list(:,2), 'k--', 'DisplayName', 'Exact orbit');
-axis equal; axis([-20, 20, -20, 20]);
-title('Adaptive RK Orbit vs Exact Solution');
-xlabel('x position'); ylabel('y position');
-legend show;
+figure(10)
+plot(0,0,'yo','markerfacecolor','y','markersize',8) % sun
+hold on
+plot(X_var(:,1), X_var(:,2), 'r', 'DisplayName', 'Adaptive RK')
+plot(V_list(:,1), V_list(:,2), 'k--', 'DisplayName', 'Exact orbit')
+axis equal; axis([-20, 20, -20, 20])
+title('Adaptive RK Orbit vs Exact Solution')
+xlabel('x position')
+ylabel('y position')
+legend
 
-% New define planet start
+% --------------------- New define planet start --------------------------
     x0 = 3;
     y0 = 5;
     dxdt0 = 3.5;
@@ -295,24 +294,14 @@ legend show;
 
     % Define X0 as starting point location & velocity of planet
     X0 = [x0;y0;dxdt0;dydt0];
+    solution_func2 = @(t_in) compute_planetary_motion(t_in, X0, orbit_params);
     t_exact = linspace(tspan(1),tspan(2),300);
     V_list = compute_planetary_motion(t_exact,X0,orbit_params);
     
     h_ref= 0.01;
 
-    [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration ...
-    (gravity_rate_func_wrapper, tspan, X0, h_ref, HeunEuler, p, error_desired);
+    [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration(gravity_rate_func_wrapper, tspan, X0, h_ref, HeunEuler, p, error_desired);
 
-    error_desired_list = logspace(-9, -2, 100);
-
-%     for i = 1:length(error_desired_list)
-% 
-%     [t_list, X_list, h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration ...
-%     (gravity_rate_func_wrapper, tspan, X0, h_ref, HeunEuler, p, error_desired_list(i));
-% 
-%     
-% 
-%     end
 
     figure(11)
     axis([-20,40,-50,20])
@@ -322,6 +311,43 @@ legend show;
     plot(V_list(:,1),V_list(:,2),'k--', 'DisplayName', 'Exact'); 
     legend()
 
+   % --------------- STEP SIZE VS GLOBAL TRUNCATION ERROR ---------------
+
+    % Adaptive Step
+    h_ref= 0.001;
+    p = 5;          % DormandPrince
+    error_desired_list = logspace(-12, -7, 50);
+    global_trunc_error_sweeperror = zeros(size(error_desired_list));
+    avg_step_size_sweeperror = zeros(size(error_desired_list));
+    for i = 1:length(error_desired_list)
+        [t_list, X_list, h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration(gravity_rate_func_wrapper, tspan, X0, h_ref, DormandPrince, p, error_desired_list(i));
+        global_trunc_error_sweeperror(i) = norm(X_list(end, :)'-solution_func2(t_list(end)));
+        avg_step_size_sweeperror(i) = h_avg;
+    end
+
+
+    % Fixed Step
+    step_size_list = logspace(-3, 0, 50);
+    % step_size_list = avg_step_size_sweeperror;
+    global_trunc_error_sweepstep = zeros(size(error_desired_list));
+    avg_step_size_sweepstep = zeros(size(error_desired_list));
+
+    for i = 1:length(step_size_list)
+        [t_list,X_list,h_avg, num_evals] = explicit_RK_fixed_step_integration(gravity_rate_func_wrapper,tspan,X0,step_size_list(i),DormandPrince);
+        global_trunc_error_sweepstep(i) = norm(X_list(end, :)'-solution_func2(t_list(end)));
+        avg_step_size_sweepstep(i) = h_avg;
+
+        
+    end
+
+    figure(12)
+    loglog(avg_step_size_sweeperror, global_trunc_error_sweeperror, 'DisplayName', 'Adaptive')
+    hold on
+    loglog(avg_step_size_sweepstep, global_trunc_error_sweepstep, 'DisplayName', 'Fixed Step')
+    legend()
+    xlabel("Avg Step Size")
+    ylabel("Global Truncation Error")
+
+
 
 end
-

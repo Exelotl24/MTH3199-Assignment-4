@@ -29,18 +29,20 @@ function [XB, num_evals, h_next, redo] = explicit_RK_variable_step...
     [XB1, XB2, num_evals] = RK_step_embedded(rate_func_in,t,XA,h,BT_struct);
 
     safety = 0.9;
-    alpha  = 5;
+    alpha  = 2;
 
     % local error estimate
     error_est = norm(XB1 - XB2);
     
     % compute next step size
-    if error_est == 0
-        scale_factor = alpha; 
-    else
-        scale_factor = safety * (error_desired / error_est)^(1/p);
-        scale_factor = min(scale_factor, alpha);
-    end
+    scale_factor = safety * (error_desired / error_est)^(1/p);
+    scale_factor = min(scale_factor, alpha);
+    % if error_est == 0
+    %     scale_factor = alpha; 
+    % else
+    %     scale_factor = safety * (error_desired / error_est)^(1/p);
+    %     scale_factor = min(scale_factor, alpha);
+    % end
 
     h_next = h * scale_factor;
 

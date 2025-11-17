@@ -28,7 +28,7 @@ function [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_varia
     h = h_ref;
 
     t_list = t;
-    X_list = X.';
+    X_list = X';
 
     num_evals = 0;
     attempted_steps = 0;
@@ -43,7 +43,7 @@ function [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_varia
 
         % compute adaptive step
         [X_next, num_eval_step, h_next, redo] = explicit_RK_variable_step(rate_func_in, t, X, h, BT_struct, p, error_desired);
-        attemped_steps = attempted_steps + 1;
+        attempted_steps = attempted_steps + 1;
         num_evals = num_evals + num_eval_step;
 
         if redo
@@ -56,8 +56,8 @@ function [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_varia
             X = X_next;
 
             % save results
-            t_list(end + 1, 1) = t;
-            X_list(end + 1, :) = X.';
+            t_list(end + 1) = t;
+            X_list(end + 1, :) = X';
 
             % update step size
             h = h_next;
@@ -69,6 +69,6 @@ function [t_list,X_list,h_avg, num_evals, step_failure_rate] = explicit_RK_varia
     h_avg = mean(h_list);
 
     % step failure rate
-    step_failure_rate = (failed_steps)/attemped_steps;
+    step_failure_rate = (failed_steps)/attempted_steps;
 
 end

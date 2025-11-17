@@ -8,10 +8,15 @@ function [E_effectivity, H_effectivity] = conservation(t_list, V_list, orbit_par
     H_error_list = H_list-H_list(1);
 
     figure()
-    plot(t_list, E_error_list, 'k--', 'DisplayName', 'Energy Error')
-    hold on
-    plot(t_list, H_error_list, 'k', 'DisplayName', 'Angular Momentum Error')
+    yyaxis left
+    plot(t_list, E_error_list, '--', 'DisplayName', 'Energy Error')
+    ylabel('Energy Error (J)')
+    yyaxis right
+    plot(t_list, H_error_list, 'DisplayName', 'Angular Momentum Error')
+    ylabel('Angular Momentum Error (kg m2/s)')
     legend()
+    xlabel('Time')
+    title('Conservation of Energy')
 
     E_effectivity = norm(E_error_list);
     H_effectivity = norm(H_error_list);

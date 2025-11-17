@@ -86,31 +86,39 @@ function main()
     figure(1);
     subplot(2,1,1)
     hold on
-    plot(t_list,X_list(:,1),'r');
-    plot(t_list,X_list(:,2),'b');
-    plot(t_exact,V_list(:,1),'k--');
-    plot(t_exact,V_list(:,2),'k--');
+    plot(t_list,X_list(:,1),'r', 'DisplayName', 'Calculated X-pos');
+    plot(t_list,X_list(:,2),'b', 'DisplayName', 'Calculated Y-pos');
+    plot(t_exact,V_list(:,1),'k--', 'DisplayName', 'Exact X-pos');
+    plot(t_exact,V_list(:,2),'k--', 'DisplayName', 'Exact Y-pos');
 
-    xlabel('time')
-    ylabel('position')
+    xlabel('Time')
+    ylabel('Position')
+    title('Position Fixed RK Step Orbit')
+    legend()
 
     subplot(2,1,2)
     hold on
-    plot(t_list,X_list(:,3),'r');
-    plot(t_list,X_list(:,4),'b');
-    plot(t_exact,V_list(:,3),'k--');
-    plot(t_exact,V_list(:,4),'k--');
+    plot(t_list,X_list(:,3),'r', 'DisplayName', 'Calculated X-vel');
+    plot(t_list,X_list(:,4),'b', 'DisplayName', 'Calculated Y-vel');
+    plot(t_exact,V_list(:,3),'k--', 'DisplayName', 'Exact X-vel');
+    plot(t_exact,V_list(:,4),'k--', 'DisplayName', 'Exact Y-vel');
 
-    xlabel('time')
-    ylabel('velocity')
+    xlabel('Time')
+    ylabel('Velocity')
+    title('Velocity Fixed RK Step Orbit')
+    legend()
 
     figure(2)
     axis equal; axis square;
     axis([-20,20,-20,20])
     hold on
     plot(0,0,'ro','markerfacecolor','r','markersize',5);
-    plot(X_list(:,1),X_list(:,2),'r');
-    plot(V_list(:,1),V_list(:,2),'k--');
+    plot(X_list(:,1),X_list(:,2),'r', 'DisplayName', 'Fixed RK');
+    plot(V_list(:,1),V_list(:,2),'k--', 'DisplayName', 'Exact Orbit');
+    title('Fixed RK Orbit vs Exact Solution')
+    xlabel('Position (x)')
+    ylabel('Position (y)')
+    legend()
 
 
     % ------------------- LOCAL TRUNCATION ---------------------
@@ -174,7 +182,6 @@ function main()
      [EV, HV] = conservation(t_exact, V_list, orbit_params);        % figure(5)
      [EX, HX] = conservation(t_list, X_list, orbit_params);         % figure(6)
 
-
      % -------------- LOCAL TRUNCATION -----------------------
 
      h_list = logspace(-4, -1, 100);
@@ -220,6 +227,7 @@ function main()
     xlabel('step-size')
     ylabel('local truncation error')
     legend()
+    title('Local Truncation Error vs Step Size')
 
 
 %     figure(8)
@@ -263,10 +271,7 @@ p = 5;  % Dormand–Prince method
 error_desired = 1e-5;
 h_start = 0.1;
 
-[XB, num_evals_step, h_next, redo] = explicit_RK_variable_step(gravity_rate_func_wrapper, 0, X0, h_start, DormandPrince, p, error_desired);
-
-
-[t_var, X_var, h_avg_var, num_evals_var, step_failure_rate] = explicit_RK_variable_step_integration(gravity_rate_func_wrapper, [0, 300], X0, h_ref, DormandPrince, p, error_desired);
+[~, X_var, ~, ~, ~] = explicit_RK_variable_step_integration(gravity_rate_func_wrapper, [0, 300], X0, h_ref, DormandPrince, p, error_desired);
 
 
 % compare orbit to real solution
@@ -277,8 +282,8 @@ plot(X_var(:,1), X_var(:,2), 'r', 'DisplayName', 'Adaptive RK')
 plot(V_list(:,1), V_list(:,2), 'k--', 'DisplayName', 'Exact orbit')
 axis equal; axis([-20, 20, -20, 20])
 title('Adaptive RK Orbit vs Exact Solution')
-xlabel('x position')
-ylabel('y position')
+xlabel('Position (x)')
+ylabel('Position (y)')
 legend
 
 % --------------------- New define planet start --------------------------
@@ -306,48 +311,103 @@ legend
     figure(11)
     axis([-20,40,-50,20])
     hold on
-    plot(0,0,'ro','markerfacecolor','r','markersize',5, 'DisplayName', 'Star');
+    plot(0,0,'ro','markerfacecolor','r','markersize',5, 'DisplayName', 'Sun');
     plot(X_list(:,1),X_list(:,2),'r','DisplayName', 'Calculated'); 
     plot(V_list(:,1),V_list(:,2),'k--', 'DisplayName', 'Exact'); 
     legend()
+    title('Calculated vs Exact Position')
+    xlabel('Position (x)')
+    ylabel('Position (y)')
 
-   % --------------- STEP SIZE VS GLOBAL TRUNCATION ERROR ---------------
+   % ---------- ADAPTIVE VS FIXED STEP GLOBAL TRUNCATION ERROR -----------
 
     % Adaptive Step
     h_ref= 0.001;
     p = 5;          % DormandPrince
     error_desired_list = logspace(-12, -7, 50);
-    global_trunc_error_sweeperror = zeros(size(error_desired_list));
-    avg_step_size_sweeperror = zeros(size(error_desired_list));
+    global_trunc_error_adaptive = zeros(size(error_desired_list));
+    avg_step_size_adaptive = zeros(size(error_desired_list));
+    num_evals_adaptive = zeros(size(error_desired_list));
+    step_failure_rate_list = zeros(size(error_desired_list));
     for i = 1:length(error_desired_list)
         [t_list, X_list, h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration(gravity_rate_func_wrapper, tspan, X0, h_ref, DormandPrince, p, error_desired_list(i));
-        global_trunc_error_sweeperror(i) = norm(X_list(end, :)'-solution_func2(t_list(end)));
-        avg_step_size_sweeperror(i) = h_avg;
+        global_trunc_error_adaptive(i) = norm(X_list(end, :)'-solution_func2(t_list(end)));
+        avg_step_size_adaptive(i) = h_avg;
+        num_evals_adaptive(i) = num_evals;
+        step_failure_rate_list(i) = step_failure_rate;
     end
 
 
     % Fixed Step
     step_size_list = logspace(-3, 0, 50);
     % step_size_list = avg_step_size_sweeperror;
-    global_trunc_error_sweepstep = zeros(size(error_desired_list));
-    avg_step_size_sweepstep = zeros(size(error_desired_list));
+    global_trunc_error_fixed = zeros(size(step_size_list));
+    avg_step_size_fixed = zeros(size(step_size_list));
+    num_evals_fixed = zeros(size(step_size_list));
 
     for i = 1:length(step_size_list)
         [t_list,X_list,h_avg, num_evals] = explicit_RK_fixed_step_integration(gravity_rate_func_wrapper,tspan,X0,step_size_list(i),DormandPrince);
-        global_trunc_error_sweepstep(i) = norm(X_list(end, :)'-solution_func2(t_list(end)));
-        avg_step_size_sweepstep(i) = h_avg;
+        global_trunc_error_fixed(i) = norm(X_list(end, :)'-solution_func2(t_list(end)));
+        avg_step_size_fixed(i) = h_avg;
+        num_evals_fixed(i) = num_evals;
 
-        
     end
 
     figure(12)
-    loglog(avg_step_size_sweeperror, global_trunc_error_sweeperror, 'DisplayName', 'Adaptive')
+    loglog(avg_step_size_adaptive, global_trunc_error_adaptive, 'DisplayName', 'Adaptive')
     hold on
-    loglog(avg_step_size_sweepstep, global_trunc_error_sweepstep, 'DisplayName', 'Fixed Step')
+    loglog(avg_step_size_fixed, global_trunc_error_fixed, 'DisplayName', 'Fixed Step')
     legend()
     xlabel("Avg Step Size")
     ylabel("Global Truncation Error")
+    title("Step Size vs Global Truncation Error")
+
+    figure(13)
+    loglog(num_evals_adaptive, global_trunc_error_adaptive, 'DisplayName', 'Adaptive')
+    hold on
+    loglog(num_evals_fixed, global_trunc_error_fixed, 'DisplayName', 'Fixed Step')
+    legend()
+    xlabel("Number of Evaluations")
+    ylabel("Global Truncation Error")
+    title("# Evals vs Global Truncation Error")
+
+    figure(14)
+    semilogx(avg_step_size_adaptive, step_failure_rate_list, 'ko')
+    xlabel("Average Step Size")
+    ylabel("Step Failure Rate")
+    title("Step Size vs. Failure Rate")
 
 
+    % ------------ ANALYZING ADAPTIVE STEP FUNCTION ---------------------
+
+    desired_error = 1e-6;
+    [t_list, X_list, h_avg, num_evals, step_failure_rate] = explicit_RK_variable_step_integration(gravity_rate_func_wrapper, tspan, X0, h_ref, DormandPrince, p, desired_error);
+    
+    position_norms = vecnorm(X_list(:, 1:2)');
+    % Position Plot
+    figure(15)
+    plot(X_list(:, 1), X_list(:, 2),'ro-','markerfacecolor','k','markeredgecolor','k','markersize',2)
+    hold on
+    xlabel('Position (x)')
+    ylabel('Position (Y)')
+    title('Position vs Time (Adaptive)')
+    plot(0,0,'yo','markerfacecolor','y','markersize',8) % sun
+
+
+
+    velocity_norms = vecnorm(X_list(:, 3:4)');
+    % Velocity Plot
+    figure(16)
+    plot(X_list(:, 3), X_list(:, 4),'ro-','markerfacecolor','k','markeredgecolor','k','markersize',2)
+    xlabel('Velocity (x)')
+    ylabel('Velocity (y)')
+    title('Velocity vs Time (Adaptive)')
+
+    h_list = diff(t_list);
+    figure(17)
+    semilogx(h_list, position_norms(2:end),'bo')
+    xlabel('Step Size')
+    ylabel('Distance Planet to Sun')
+    title('Distance vs Step Size')
 
 end
